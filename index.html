@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mini Prism | JSON Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+    <h1>Mini Prism</h1>
+    <div class="header-actions">
+        <select id="themeToggle" class="btn-icon">
+            <option value="midnight">🌌 Midnight</option>
+            <option value="amber">🍯 Amber</option>
+            <option value="cyber">🦾 Cyber</option>
+        </select>
+        <button id="btnExportMenu" class="btn-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Export
+        </button>
+    </div>
+</header>
+
+<nav class="view-tabs" id="tabs">
+    <button class="tab active" data-target="view-source">📝 Source</button>
+    <button class="tab hidden" data-target="view-builder">🏗️ Builder</button>
+    <button class="tab hidden" data-target="view-tree">🌲 Tree</button>
+    <button class="tab hidden" data-target="view-table">📊 Table</button>
+    <button class="tab hidden" data-target="view-cards">🗂️ Cards</button>
+    <button class="tab hidden" data-target="view-graph">🕸️ Graph</button>
+    <button class="tab hidden" data-target="view-code">💻 Code</button>
+</nav>
+
+<main class="container">
+    <!-- 1. Source -->
+    <div id="view-source" class="view-pane active">
+        <div class="source-grid">
+            <select class="btn-large secondary" id="templateSelect">
+                <option value="" disabled selected>Load a Template...</option>
+                <optgroup label="Business Data">
+                    <option value="biz_crm">👥 CRM Contacts</option>
+                    <option value="biz_invoice">🧾 Invoice Data</option>
+                    <option value="biz_hr">🏢 HR Records</option>
+                </optgroup>
+                <optgroup label="Web Dev Data">
+                    <option value="dev_package">📦 package.json</option>
+                    <option value="dev_theme">🎨 UI Theme Tokens</option>
+                    <option value="dev_api">🌐 REST API Response</option>
+                </optgroup>
+            </select>
+            <div style="text-align:center; color:var(--text-muted); font-size:0.9rem;">— OR —</div>
+            <div class="dropzone" id="dropzone">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <p style="font-weight: 500;">Tap to upload or drop .json file</p>
+                <input type="file" id="fileInput" accept=".json" class="hidden">
+            </div>
+            <textarea id="jsonInput" class="source-textarea" placeholder="Paste your raw JSON code here..."></textarea>
+            <button class="btn-large" id="btnFormat">Parse & Build ✨</button>
+        </div>
+    </div>
+
+    <!-- 2. Builder -->
+    <div id="view-builder" class="view-pane">
+        <div class="builder-header" id="builderBreadcrumbs"></div>
+        <div class="builder-list" id="builderList"></div>
+        <div class="fab-bar">
+            <input type="text" class="fab-search" id="builderSearch" placeholder="Search keys...">
+            <button class="fab-btn" id="btnBuilderAdd">+</button>
+        </div>
+    </div>
+
+    <!-- 3. Tree -->
+    <div id="view-tree" class="view-pane">
+        <div style="display:flex; gap:8px; margin-bottom:1rem;">
+            <button class="btn-icon" id="btnExpandAll">Expand</button>
+            <button class="btn-icon" id="btnCollapseAll">Collapse</button>
+        </div>
+        <div id="treeContainer"></div>
+    </div>
+
+    <!-- 4, 5, 6, 7 -->
+    <div id="view-table" class="view-pane"><div id="tableContainer"></div></div>
+    <div id="view-cards" class="view-pane"><div id="cardsContainer" class="cards-grid"></div></div>
+    <div id="view-graph" class="view-pane"><canvas id="graphCanvas"></canvas></div>
+    <div id="view-code" class="view-pane"><div id="rawCode"></div></div>
+</main>
+
+<!-- Builder Modal -->
+<div class="modal-overlay" id="builderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button class="modal-btn-circle modal-btn-close" id="modalBtnClose">✕</button>
+            <h3 id="modalTitle">Add</h3>
+            <button class="modal-btn-circle modal-btn-save" id="modalBtnSave">✓</button>
+        </div>
+        <div class="modal-body">
+            <div class="input-pill" id="modalKeyGroup">
+                <label>Key</label>
+                <input type="text" id="modalKey" placeholder="propertyName">
+            </div>
+            <div class="input-pill">
+                <label>Type</label>
+                <select id="modalType">
+                    <option value="string">Text</option><option value="number">Number</option>
+                    <option value="boolean">Boolean</option><option value="array">Array</option>
+                    <option value="object">Dictionary</option><option value="null">Null</option>
+                </select>
+            </div>
+            <div class="input-pill" id="modalValueGroup">
+                <label>Value</label>
+                <input type="text" id="modalValueText" placeholder="Enter value">
+                <input type="number" id="modalValueNumber" placeholder="0" class="hidden">
+                <div class="toggle-switch hidden" id="modalValueBool"></div>
+                <div id="modalValueHidden" class="hidden" style="color:var(--text-muted); font-size:0.85rem; font-style:italic; text-align:right; flex-grow:1;">Empty Structure</div>
+            </div>
+            <button class="modal-delete-btn" id="modalBtnDelete">Delete Item</button>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button class="modal-btn-circle modal-btn-close" id="exportBtnClose">✕</button>
+            <h3>Export As</h3>
+            <div style="width:40px;"></div>
+        </div>
+        <div class="modal-body" style="gap: 8px;">
+            <div class="input-pill" id="btnExpJSON" style="color:var(--c-key); font-weight:600; justify-content:center;">JSON File (.json)</div>
+            <div class="input-pill" id="btnExpJS" style="color:var(--c-string); font-weight:600; justify-content:center;">JavaScript Module (.js)</div>
+            <div class="input-pill" id="btnExpCSV" style="color:var(--c-number); font-weight:600; justify-content:center;">CSV Table (.csv)</div>
+            <div class="input-pill" id="btnExpHTML" style="color:var(--c-boolean); font-weight:600; justify-content:center;">HTML Webpage (.html)</div>
+        </div>
+    </div>
+</div>
+
+<div id="toast">Message</div>
+
+<script src="script.js"></script>
+</body>
+</html>
